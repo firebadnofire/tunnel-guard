@@ -1,0 +1,12 @@
+[Unit]
+Description=Tunnel Guard Service
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/tunnel-guard
+User=root
+Group=root
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
