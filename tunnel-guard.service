@@ -3,7 +3,7 @@ Description=Tunnel Guard Service
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/tunnel-guard
+ExecStart=/usr/local/bin/tunnel-guard
 User=root
 Group=root
 Restart=always

@@ -24,3 +24,11 @@ placeholder2 127.0.0.1 22 7896
 `cd tunnel-guard`
 
 `make install`
+
+# Troubleshooting
+
+On some systems, it may be needed to set `AllowTcpForwarding` to `yes` in your sshd configs. Your /etc/ssh/sshd_config should include the following somewhere in it:
+
+`AllowTcpForwarding yes`
+
+Be sure it is not commented out, then restart sshd and tunnel-guard
