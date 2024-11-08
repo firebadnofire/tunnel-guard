@@ -2,7 +2,7 @@
 BINARY = tunnel-guard
 SRC = main.go
 SCRIPTS = tg-add-ssh-key
-PREFIX ?= /usr/local
+PREFIX ?= /usr
 BINDIR = $(PREFIX)/bin
 SYSTEMD_DIR = /etc/systemd/system
 SERVICE_FILE = tunnel-guard.service
