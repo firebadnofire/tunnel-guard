@@ -29,3 +29,9 @@ On some systems, it may be needed to set `AllowTcpForwarding` to `yes` in your s
 `AllowTcpForwarding yes`
 
 Be sure it is not commented out, then restart sshd and tunnel-guard
+
+# Additional information:
+
+This project has been tested with Alma Linux 9 and Debain 12.
+
+This project is licensed under the GNU Affero General Public License, version 3 (AGPLv3) license. To view what rights are granted/limited, please see [the project license file](https://codeberg.org/firebadnofire/tunnel-guard/src/branch/main/LICENSE) or the [license rights file](https://codeberg.org/firebadnofire/tunnel-guard/src/branch/main/LICENSE-rights.md)
