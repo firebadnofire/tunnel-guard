@@ -53,6 +53,17 @@ func main() {
         tunnelProcesses[tunnel.Name] = cmd
     }
 
+    // Defer cleanup of SSH tunnels on program exit
+    defer func() {
+        log.Println("Program exiting. Killing all SSH tunnels...")
+        for name, cmd := range tunnelProcesses {
+            if cmd != nil && cmd.Process != nil {
+                cmd.Process.Kill()
+                log.Printf("Killed tunnel %s", name)
+            }
+        }
+    }()
+
     // Monitor tunnels
     intervalDuration := time.Duration(*interval * float64(time.Minute))
 
@@ -61,7 +72,6 @@ func main() {
         for _, tunnel := range tunnels {
             cmd := tunnelProcesses[tunnel.Name]
             if cmd.Process == nil {
-                // Process is not running
                 log.Printf("Tunnel %s is not running (process is nil), restarting...", tunnel.Name)
                 newCmd, err := startTunnel(tunnel)
                 if err != nil {
@@ -75,7 +85,6 @@ func main() {
             // Check if process is alive
             err := cmd.Process.Signal(syscall.Signal(0))
             if err != nil {
-                // Process is not alive
                 log.Printf("Tunnel %s is not running, restarting...", tunnel.Name)
                 newCmd, err := startTunnel(tunnel)
                 if err != nil {
@@ -112,11 +121,8 @@ func setupTunnelGuard() {
 `
     ioutil.WriteFile(tunsConfPath, []byte(sampleConf), 0644)
 
-    // Create user ssh-tun with home dir /etc/tunnel-guard/
-    // Check if user exists
     _, err := user.Lookup("ssh-tun")
     if err != nil {
-        // User does not exist, create
         cmd := exec.Command("useradd", "-d", tunnelGuardDir, "ssh-tun")
         err := cmd.Run()
         if err != nil {
@@ -124,10 +130,7 @@ func setupTunnelGuard() {
         }
     }
 
-    // Create .ssh directory
     os.MkdirAll(sshDir, 0700)
-
-    // Generate ed25519 key with no password and 600 perms
     keyPath := filepath.Join(sshDir, "id_ed25519")
     if _, err := os.Stat(keyPath); os.IsNotExist(err) {
         cmd := exec.Command("ssh-keygen", "-t", "ed25519", "-N", "", "-f", keyPath)
@@ -136,21 +139,13 @@ func setupTunnelGuard() {
             log.Fatalf("Error generating SSH key: %v", err)
         }
     }
-
-    // Set permissions to 600
     os.Chmod(keyPath, 0600)
-
-    // Symlink id_ed25519.pub to /etc/tunnel-guard/ssh-tun.pub
     pubKeyPath := keyPath + ".pub"
     symlinkPath := filepath.Join(tunnelGuardDir, "ssh-tun.pub")
     if _, err := os.Stat(symlinkPath); os.IsNotExist(err) {
         os.Symlink(pubKeyPath, symlinkPath)
     }
-
-    // Set public read-only perms on symlink
     os.Chmod(symlinkPath, 0644)
-
-    // Create authorized_keys file
     authorizedKeysPath := filepath.Join(sshDir, "authorized_keys")
     pubKeyData, err := ioutil.ReadFile(pubKeyPath)
     if err != nil {
@@ -158,7 +153,6 @@ func setupTunnelGuard() {
     }
     ioutil.WriteFile(authorizedKeysPath, pubKeyData, 0600)
 
-    // Change ownership of /etc/tunnel-guard/.ssh/ to ssh-tun:ssh-tun
     cmd := exec.Command("chown", "-R", "ssh-tun:ssh-tun", sshDir)
     err = cmd.Run()
     if err != nil {
@@ -176,7 +170,6 @@ func readTunnelsConfig(confPath string) ([]TunnelConfig, error) {
     if err != nil {
         return nil, err
     }
-
     lines := strings.Split(string(data), "\n")
     var tunnels []TunnelConfig
     for _, line := range lines {
@@ -203,9 +196,7 @@ func readTunnelsConfig(confPath string) ([]TunnelConfig, error) {
 func startTunnel(tunnel TunnelConfig) (*exec.Cmd, error) {
     keyPath := "/etc/tunnel-guard/.ssh/id_ed25519"
     sshCmd := "ssh"
-
     localForward := fmt.Sprintf("%s:localhost:%s", tunnel.LocalPort, tunnel.RemotePort)
-
     args := []string{
         "-i", keyPath,
         "-o", "StrictHostKeyChecking=no",
@@ -214,21 +205,14 @@ func startTunnel(tunnel TunnelConfig) (*exec.Cmd, error) {
         "-L", localForward,
         "ssh-tun@" + tunnel.ServerAddr,
     }
-
     cmd := exec.Command(sshCmd, args...)
-
-    // Run the command in the background
     cmd.SysProcAttr = &syscall.SysProcAttr{
         Setsid: true,
     }
-
-    // Start the command
     err := cmd.Start()
     if err != nil {
         return nil, err
     }
-
     log.Printf("Started tunnel %s: %s", tunnel.Name, strings.Join(cmd.Args, " "))
-
     return cmd, nil
 }

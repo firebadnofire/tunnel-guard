@@ -10,11 +10,6 @@ Tunnel-guard uses /etc/tunnel-guard/tuns.conf as the central configuration scrip
 # example for Matrix Synapse: matrix 192.168.0.44 8008 8008 # (192.168.0.44:8008 -> 127.0.0.1:8008)
 # example using non-standard ports: matrix 192.168.0.44 1278 8972 # (192.168.0.44:8972 -> 127.0.0.1:1278)
 # begin user confs:
-
-# Placeholders:
-placeholder1 127.0.0.1 22 9876
-placeholder2 127.0.0.1 22 7896
-# Test tunnel activity by using "ssh -p 9876 localhost" and "ssh -p 7896 localhost"
 ```
 
 # install instructions:
@@ -24,6 +19,8 @@ placeholder2 127.0.0.1 22 7896
 `cd tunnel-guard`
 
 `make install`
+
+To uninstall, run `make uninstall`
 
 # Troubleshooting
 
