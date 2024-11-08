@@ -26,4 +26,4 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "Valid public key detected. Inserting..."
-echo '$1' | sudo -u ssh-tun tee -a /etc/tunnel-guard/.ssh/authorized_keys
+echo "$1" | sudo -u ssh-tun tee -a /etc/tunnel-guard/.ssh/authorized_keys
