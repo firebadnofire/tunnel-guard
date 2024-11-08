@@ -32,7 +32,17 @@ Be sure it is not commented out, then restart sshd and tunnel-guard
 
 # Additional information:
 
-This project has been tested with Alma Linux 9, Ubuntu 22.04, and Debian 12.
+This project has been tested with the following:
+
+```
+x86_64 Debian 12.7
+
+ARM64 Debian 12.7
+
+x86_64 Ubuntu 22.04
+
+x86_64 Alma Linux 9
+```
 
 An installation of [Go](https://go.dev/dl/) is **required**
 
