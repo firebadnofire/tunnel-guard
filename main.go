@@ -30,19 +30,15 @@ func main() {
     tunsConfPath := "/etc/tunnel-guard/tuns.conf"
 
     if _, err := os.Stat(tunsConfPath); os.IsNotExist(err) {
-        // First init
         fmt.Println("First init detected, setting up...")
-
         setupTunnelGuard()
     }
 
-    // Read tuns.conf
     tunnels, err := readTunnelsConfig(tunsConfPath)
     if err != nil {
         log.Fatalf("Error reading tuns.conf: %v", err)
     }
 
-    // Start SSH tunnels
     tunnelProcesses := make(map[string]*exec.Cmd)
     for _, tunnel := range tunnels {
         cmd, err := startTunnel(tunnel)
@@ -53,7 +49,6 @@ func main() {
         tunnelProcesses[tunnel.Name] = cmd
     }
 
-    // Defer cleanup of SSH tunnels on program exit
     defer func() {
         log.Println("Program exiting. Killing all SSH tunnels...")
         for name, cmd := range tunnelProcesses {
@@ -64,34 +59,22 @@ func main() {
         }
     }()
 
-    // Monitor tunnels
     intervalDuration := time.Duration(*interval * float64(time.Minute))
 
     for {
         time.Sleep(intervalDuration)
         for _, tunnel := range tunnels {
-            cmd := tunnelProcesses[tunnel.Name]
-            if cmd.Process == nil {
-                log.Printf("Tunnel %s is not running (process is nil), restarting...", tunnel.Name)
-                newCmd, err := startTunnel(tunnel)
-                if err != nil {
-                    log.Printf("Error restarting tunnel %s: %v", tunnel.Name, err)
-                    continue
-                }
-                tunnelProcesses[tunnel.Name] = newCmd
-                continue
-            }
 
-            // Check if process is alive
-            err := cmd.Process.Signal(syscall.Signal(0))
-            if err != nil {
-                log.Printf("Tunnel %s is not running, restarting...", tunnel.Name)
+            if !checkPortInUse(tunnel.LocalPort) {
+                log.Printf("Tunnel %s is not active on port %s, restarting...", tunnel.Name, tunnel.LocalPort)
                 newCmd, err := startTunnel(tunnel)
                 if err != nil {
                     log.Printf("Error restarting tunnel %s: %v", tunnel.Name, err)
                     continue
                 }
                 tunnelProcesses[tunnel.Name] = newCmd
+            } else {
+                log.Printf("Tunnel %s on port %s is active.", tunnel.Name, tunnel.LocalPort)
             }
         }
     }
@@ -108,15 +91,13 @@ func setupTunnelGuard() {
     tunnelGuardDir := "/etc/tunnel-guard/"
     sshDir := filepath.Join(tunnelGuardDir, ".ssh")
 
-    // Create /etc/tunnel-guard/
     os.MkdirAll(tunnelGuardDir, 0755)
 
-    // Create tuns.conf with sample content
     sampleConf := `# syntax: [name] [server address] [local port] [remote port]
 # example for Matrix Synapse: 
-# matrix 192.168.0.44 8008 8008 # (192.168.0.44:8008 -> 127.0.0.1:8008)
+# matrix 192.168.0.44 8008 8008
 # example using non-standard ports: 
-# matrix 192.168.0.44 1278 8972 # (192.168.0.44:8972 -> 127.0.0.1:1278)
+# matrix 192.168.0.44 1278 8972
 # begin user confs:
 `
     ioutil.WriteFile(tunsConfPath, []byte(sampleConf), 0644)
@@ -124,8 +105,7 @@ func setupTunnelGuard() {
     _, err := user.Lookup("ssh-tun")
     if err != nil {
         cmd := exec.Command("useradd", "-d", tunnelGuardDir, "ssh-tun")
-        err := cmd.Run()
-        if err != nil {
+        if err := cmd.Run(); err != nil {
             log.Fatalf("Error creating user ssh-tun: %v", err)
         }
     }
@@ -134,8 +114,7 @@ func setupTunnelGuard() {
     keyPath := filepath.Join(sshDir, "id_ed25519")
     if _, err := os.Stat(keyPath); os.IsNotExist(err) {
         cmd := exec.Command("ssh-keygen", "-t", "ed25519", "-N", "", "-f", keyPath)
-        err := cmd.Run()
-        if err != nil {
+        if err := cmd.Run(); err != nil {
             log.Fatalf("Error generating SSH key: %v", err)
         }
     }
@@ -153,9 +132,8 @@ func setupTunnelGuard() {
     }
     ioutil.WriteFile(authorizedKeysPath, pubKeyData, 0600)
 
-    cmd := exec.Command("chown", "-R", "ssh-tun:ssh-tun", sshDir)
-    err = cmd.Run()
-    if err != nil {
+    chownCmd := exec.Command("chown", "-R", "ssh-tun:ssh-tun", sshDir)
+    if err = chownCmd.Run(); err != nil {
         log.Fatalf("Error changing ownership of .ssh directory: %v", err)
     }
 
@@ -215,4 +193,14 @@ func startTunnel(tunnel TunnelConfig) (*exec.Cmd, error) {
     }
     log.Printf("Started tunnel %s: %s", tunnel.Name, strings.Join(cmd.Args, " "))
     return cmd, nil
+}
+
+func checkPortInUse(port string) bool {
+    cmd := exec.Command("lsof", "-i", fmt.Sprintf(":%s", port))
+    output, err := cmd.Output()
+    if err != nil {
+        log.Printf("Error checking port %s: %v", port, err)
+        return false
+    }
+    return strings.Contains(string(output), "root")
 }
