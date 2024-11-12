@@ -46,6 +46,8 @@ x86_64 Alma Linux 9
 
 An installation of [Go](https://go.dev/dl/) is **required**
 
+By default, the program will check SSH tunnels every 15 minutes. You can change this check interval with the `-m` flag. Eg: `tunnel-guard -m 1` for every minute. Decimals are also accepted.
+
 This project is licensed under the GNU Affero General Public License, version 3 (AGPLv3) license. To view what rights are granted/limited, please see [the project license file](https://codeberg.org/firebadnofire/tunnel-guard/src/branch/main/LICENSE) or the [license rights file](https://codeberg.org/firebadnofire/tunnel-guard/src/branch/main/LICENSE-rights.md)
 
 Included is a script called `tg-add-ssh-key` and it's syntax is as follows:
