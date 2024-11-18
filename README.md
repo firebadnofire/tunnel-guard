@@ -14,7 +14,7 @@ Tunnel-guard uses /etc/tunnel-guard/tuns.conf as the central configuration scrip
 # begin user confs:
 ```
 
-# install instructions:
+# Install instructions:
 
 `git clone https://codeberg.org/firebadnofire/tunnel-guard`
 
@@ -23,6 +23,10 @@ Tunnel-guard uses /etc/tunnel-guard/tuns.conf as the central configuration scrip
 `make install`
 
 To uninstall, run `make uninstall`
+
+# Alternative install:
+
+Head to [https://archuser.org/tunnel-guard/builds/](https://archuser.org/tunnel-guard/builds/) and grab the latest pre-compiled .tar.gz
 
 # Troubleshooting
 
