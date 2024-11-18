@@ -16,9 +16,11 @@ import (
 
 type TunnelConfig struct {
     Name       string
-    ServerAddr string
     LocalPort  string
     RemotePort string
+    RemoteIP   string
+    LocalIP    string
+    ServerAddr string
 }
 
 func main() {
@@ -93,11 +95,11 @@ func setupTunnelGuard() {
 
     os.MkdirAll(tunnelGuardDir, 0755)
 
-    sampleConf := `# syntax: [name] [server address] [local port] [remote port]
-# example for Matrix Synapse: 
-# matrix 192.168.0.44 8008 8008
-# example using non-standard ports: 
-# matrix 192.168.0.44 1278 8972
+    sampleConf := `# syntax: [name] [local port] [remote port] [remote ip] (optional: local ip)
+# example for Matrix Synapse:
+# matrix 8008 8008 192.168.0.44
+# example using non-standard ports:
+# matrix 1278 8972 192.168.0.44 0.0.0.0
 # begin user confs:
 `
     ioutil.WriteFile(tunsConfPath, []byte(sampleConf), 0644)
@@ -160,11 +162,17 @@ func readTunnelsConfig(confPath string) ([]TunnelConfig, error) {
             log.Printf("Skipping invalid line in config: %s", line)
             continue
         }
+        localIP := "localhost"
+        if len(fields) == 5 {
+            localIP = fields[4]
+        }
         tunnel := TunnelConfig{
             Name:       fields[0],
-            ServerAddr: fields[1],
-            LocalPort:  fields[2],
-            RemotePort: fields[3],
+            LocalPort:  fields[1],
+            RemotePort: fields[2],
+            RemoteIP:   fields[3],
+            LocalIP:    localIP,
+            ServerAddr: fields[3],
         }
         tunnels = append(tunnels, tunnel)
     }
@@ -174,7 +182,7 @@ func readTunnelsConfig(confPath string) ([]TunnelConfig, error) {
 func startTunnel(tunnel TunnelConfig) (*exec.Cmd, error) {
     keyPath := "/etc/tunnel-guard/.ssh/id_ed25519"
     sshCmd := "ssh"
-    localForward := fmt.Sprintf("%s:localhost:%s", tunnel.LocalPort, tunnel.RemotePort)
+    localForward := fmt.Sprintf("%s:%s:%s:%s", tunnel.LocalIP, tunnel.LocalPort, tunnel.RemoteIP, tunnel.RemotePort)
     args := []string{
         "-i", keyPath,
         "-o", "StrictHostKeyChecking=no",
@@ -204,3 +212,4 @@ func checkPortInUse(port string) bool {
     }
     return strings.Contains(string(output), "root")
 }
+
