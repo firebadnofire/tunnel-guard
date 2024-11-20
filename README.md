@@ -28,6 +28,19 @@ To uninstall, run `make uninstall`
 
 Head to [https://archuser.org/tunnel-guard/builds/](https://archuser.org/tunnel-guard/builds/) and grab the latest pre-compiled .tar.gz
 
+```
+wget -O tunnel-guard.tar.gz https://archuser.org/tunnel-guard/builds/tunnel-guard.V#.#.tar.gz
+
+tar -xavf tunnel-guard.tar.gz
+
+cd tunnel-guard
+
+sudo ./aio.sh [install/uninstall]
+
+```
+
+At this point, the tar and `tunnel-guard` directory created by tar are no longer needed and can be removed by `rm -r tunnel-guard/ tunnel-guard.tar.gz`
+
 # Troubleshooting
 
 On some systems, it may be needed to set `AllowTcpForwarding` to `yes` in your sshd configs. Your /etc/ssh/sshd_config should include the following somewhere in it:
