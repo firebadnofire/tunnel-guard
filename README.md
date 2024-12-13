@@ -80,4 +80,11 @@ Included is a script called `tg-add-ssh-key` and it's syntax is as follows:
 
 `sudo tg-add-ssh-key "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDYOS9zxV7Qm9Qlnkfzj5ebLhtE/cdWELF0BIZiEnHWQ root@server"`
 
-This will insert the provided SSH public key into `/etc/tunnel-guard/.ssh/authorized_keys` giving that key access to the ssh-tun user for incoming tunnel connections.
+You may also substitute the key for `list` to list the contents of `/etc/tunnel-guard/.ssh/authorized_keys`
+
+Another script called `tg-transfer-key` is available to copy the ssh key automatically to a remote host assuming the user you access as sudo privileges. It's syntax is as follows:
+
+`tg-transfer-key USERNAME HOST`
+
+The `USERNAME` should be set to the user you want to ssh as. This will likely be your admin user account and should NOT be the `ssh-tun` user. The script reads `/etc/tunnel-guard/ssh-tun.pub` then remotes into an admin user's sudo power to append the key to `/etc/tunnel-guard/.ssh/authorized_keys` as the `ssh-tun` user
+

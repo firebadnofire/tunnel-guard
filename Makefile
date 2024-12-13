@@ -1,7 +1,7 @@
 # Build and installation variables
 BINARY = tunnel-guard
 SRC = main.go
-SCRIPTS = tg-add-ssh-key
+SCRIPTS = tg-add-ssh-key tg-transfer-key
 PREFIX ?= /usr
 BINDIR = $(PREFIX)/bin
 SYSTEMD_DIR = /etc/systemd/system

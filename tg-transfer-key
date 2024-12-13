@@ -1,0 +1,29 @@
+#!/bin/bash
+
+#!/bin/bash
+
+# Function to print usage
+print_usage() {
+    echo "Usage: $0 <user_input> <DNS_or_IP>"
+    echo "  <user_input>  : Any plain text input"
+    echo "  <DNS_or_IP>   : A valid DNS name or IP address"
+    exit 1
+}
+
+# Check if both arguments are provided
+if [ -z "$1" ] || [ -z "$2" ]; then
+    echo "Error: Missing arguments."
+    print_usage
+fi
+
+# Variables
+REMOTE_USER="$1"
+REMOTE_HOST="$2"
+REMOTE_FILE="/etc/tunnel-guard/.ssh/authorized_keys"
+APPEND_TEXT="$(sudo -u ssh-tun cat /etc/tunnel-guard/ssh-tun.pub)"
+
+# Append text to the remote file
+ssh "${REMOTE_USER}@${REMOTE_HOST}" "echo '${APPEND_TEXT}' | sudo -u ssh-tun tee -a '${REMOTE_FILE}'"
+echo ""
+echo "Remote auth contents:"
+ssh "${REMOTE_USER}@${REMOTE_HOST}" "sudo -u ssh-tun cat $REMOTE_FILE"
